@@ -29,6 +29,12 @@ func (l *Lexer) readIdentifier() string {
 	return l.input[position:l.position]
 }
 
+func (l *Lexer) skipWhiteSpace() {
+	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
+		l.readChar()
+	}
+}
+
 // Lexerのコンストラクタ
 func New(input string) *Lexer {
 	l := &Lexer{input: input}
@@ -38,6 +44,7 @@ func New(input string) *Lexer {
 
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
+	l.skipWhiteSpace() // 空白読み飛ばさないと不要なILLIGAL tokenが生成されてしまう
 
 	switch l.ch {
 	case '=':
@@ -63,6 +70,7 @@ func (l *Lexer) NextToken() token.Token {
 		if isLetter(l.ch) {
 			// 記号とは別処理なのでreadCharしない(ident終わるまで塊で１tokenとして読むため)
 			tok.Literal = l.readIdentifier()
+			tok.Type = token.LookupIdent(tok.Literal) // 変数名 or keyword
 			return tok
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch) // 使用不可能記号
