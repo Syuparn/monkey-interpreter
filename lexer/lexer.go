@@ -21,6 +21,14 @@ func (l *Lexer) readChar() {
 	l.readPosition += 1
 }
 
+func (l *Lexer) readIdentifier() string {
+	position := l.position
+	for isLetter(l.ch) {
+		l.readChar()
+	}
+	return l.input[position:l.position]
+}
+
 // Lexerのコンストラクタ
 func New(input string) *Lexer {
 	l := &Lexer{input: input}
@@ -51,12 +59,24 @@ func (l *Lexer) NextToken() token.Token {
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF //newTokenで生成しないのは、null文字をstringで変換できないため？
+	default:
+		if isLetter(l.ch) {
+			// 記号とは別処理なのでreadCharしない(ident終わるまで塊で１tokenとして読むため)
+			tok.Literal = l.readIdentifier()
+			return tok
+		} else {
+			tok = newToken(token.ILLEGAL, l.ch) // 使用不可能記号
+		}
 	}
 
-	l.readChar()
+	l.readChar() // 次の文字を読む
 	return tok
 }
 
 func newToken(tokenType token.TokenType, ch byte) token.Token {
 	return token.Token{Type: tokenType, Literal: string(ch)}
+}
+
+func isLetter(ch byte) bool {
+	return 'a' <= ch && ch <= 'z' || 'A' <= ch && 'Z' <= ch || ch == '_'
 }
