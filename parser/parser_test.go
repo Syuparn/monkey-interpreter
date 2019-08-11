@@ -1,0 +1,73 @@
+package parser
+
+import (
+	"../ast"
+	"../lexer"
+	"testing"
+)
+
+func TestLetStatements(t *testing.T) {
+	input := `
+	let x = 5;
+	let y = 10;
+	let foobar = 838383;
+	`
+
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	if program == nil { // パース成功したか
+		t.Fatalf("ParseProgram() returned nil")
+	}
+	if len(program.Statements) != 3 { // 文数チェック;inputは3文からなるはず
+		t.Fatalf("program.Statements does not contain 3 statements. got=%d",
+			len(program.Statements))
+	}
+
+	// 各文のチェック
+	tests := []struct {
+		expectedIdentifier string
+	}{
+		{"x"},
+		{"y"},
+		{"foobar"},
+	}
+
+	for i, tt := range tests {
+		stmt := program.Statements[i]
+		if !testLetStatement(t, stmt, tt.expectedIdentifier) {
+			return
+		}
+	}
+}
+
+func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
+	if s.TokenLiteral() != "let" {
+		t.Errorf("s.TokenLiteral() not 'let'. got=%q", s.TokenLiteral())
+		return false
+	}
+
+	//型アサーション; <var>.(<T>)でvarの型がTであるかどうかチェック
+	// (Tがinterfaceの場合その要件を満たすかどうか)
+	letStmt, ok := s.(*ast.LetStatement) // sが本当にLetStatementかどうか
+	if !ok {
+		t.Errorf("s not *ast.LetStatement. got=%T", s)
+		return false
+	}
+
+	if letStmt.Name.Value != name {
+		t.Errorf("letStmt.Name.Value not '%s'. got=%s.", name, letStmt.Name.Value)
+		return false
+	}
+
+	if letStmt.Name.TokenLiteral() != name {
+		t.Errorf("letStmt.Name.TokenLiteral() not '%s'. got=%s",
+			name, letStmt.Name.TokenLiteral())
+		return false
+	}
+
+	// NOTE: letStmt.Value(代入される右辺値の式)のチェックはいったん無視
+
+	return true
+}
