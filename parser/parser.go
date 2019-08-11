@@ -4,10 +4,13 @@ import (
 	"../ast"
 	"../lexer"
 	"../token"
+	"fmt"
 )
 
 type Parser struct {
 	l *lexer.Lexer
+
+	errors []string
 
 	curToken  token.Token
 	peekToken token.Token
@@ -15,12 +18,22 @@ type Parser struct {
 
 // Parser constructor
 func New(l *lexer.Lexer) *Parser {
-	p := &Parser{l: l}
+	p := &Parser{l: l, errors: []string{}}
 	// curTokenとpeekTokenをセット
 	p.nextToken()
 	p.nextToken()
 
 	return p
+}
+
+func (p *Parser) Errors() []string {
+	return p.errors
+}
+
+func (p *Parser) peekError(t token.TokenType) {
+	msg := fmt.Sprintf("expected next token to be %s, got %s instead",
+		t, p.peekToken.Type)
+	p.errors = append(p.errors, msg)
 }
 
 func (p *Parser) nextToken() {
@@ -84,10 +97,13 @@ func (p *Parser) peekTokenIs(t token.TokenType) bool {
 
 // peekTokenの型がtと等しいかどうか
 // NOTE: 副作用; true(peekTokenが期待通り)のとき内部でnextToken()呼ぶ
+//              falseのときエラーを発生させる(errorsに追加)
 func (p *Parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
 		p.nextToken()
 		return true
+	} else {
+		p.peekError(t)
+		return false
 	}
-	return false
 }
