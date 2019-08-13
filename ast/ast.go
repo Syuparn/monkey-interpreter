@@ -120,7 +120,7 @@ func (es *ExpressionStatement) TokenLiteral() string {
 
 func (es *ExpressionStatement) String() string {
 	if es.Expression != nil {
-		return es.Expression.String() //TODO: + ";"いらない？？
+		return es.Expression.String() // NOTE: 式文の";"は省略可能なので表示しない
 	}
 	return ""
 }

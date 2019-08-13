@@ -23,6 +23,11 @@ type Parser struct {
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l, errors: []string{}}
 	// curTokenとpeekTokenをセット
+
+	// pratt構文解析器の構文解析関数を初期化
+	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+	p.registerPrefix(token.IDENT, p.parseIdentifier)
+
 	p.nextToken()
 	p.nextToken()
 
@@ -66,7 +71,7 @@ func (p *Parser) parseStatement() ast.Statement {
 	case token.RETURN:
 		return p.parseReturnStatement()
 	default:
-		return nil
+		return p.parseExpressionStatement() // let, return以外の文は式文としてパース
 	}
 }
 
@@ -125,6 +130,42 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 		return false
 	}
 }
+
+func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	stmt := &ast.ExpressionStatement{Token: p.curToken}
+
+	stmt.Expression = p.parseExpression(LOWEST)
+
+	if p.peekTokenIs(token.SEMICOLON) { // 式文の;は省略可能(REPLに"5+5"など渡しても評価できるように)
+		p.nextToken()
+	}
+
+	return stmt
+}
+
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+	prefix := p.prefixParseFns[p.curToken.Type]
+	if prefix == nil {
+		return nil
+	}
+	leftExp := prefix()
+	return leftExp
+}
+
+func (p *Parser) parseIdentifier() ast.Expression {
+	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+}
+
+const ( // operand priority
+	_ int = iota
+	LOWEST
+	EQUALS      // ==
+	LESSGREATER // <, >
+	SUM         // +
+	PRODUCT     // *
+	PREFIX      // !x, -x
+	CALL        // myFunction(x)
+)
 
 // pratt構文解析器の中で各tokenに対し、tokenが前置のとき、中置のときにそれぞれ呼ばれる関数の型
 type (
