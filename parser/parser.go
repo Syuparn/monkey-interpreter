@@ -170,8 +170,12 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	leftExp := prefix()
 
 	// Pratt構文解析器の核
-	//  右側の方が優先度が高い限り一塊としてパースし続ける?
+	//  parseInfixExpression内部でまたparseExpressionを呼ぶため、
+	// 右側の方が優先度が高い限り再帰的にネストし続ける
 	// "0 == 1 + 2 * 3 + 4" -> (0 == (1 + (2 * 3))) までが一塊(leftExp)
+	// 右側の優先度が低い場合は再帰が途切れ、再度ループが回る
+	// NOTE: 式文の式の優先度はLOWESTなので、最初に呼ばれたparseExpressionは
+	// セミコロンがでるまでループし続ける
 	for !p.peekTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
 		infix := p.infixParseFns[p.peekToken.Type]
 		if infix == nil {
