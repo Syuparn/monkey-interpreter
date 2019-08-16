@@ -125,9 +125,12 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		return nil
 	}
 
-	// TODO: 右辺の式をparseしstmt.Valueにセット（今はセミコロンまで読み飛ばしている）
-	for !p.curTokenIs(token.SEMICOLON) {
-		p.nextToken()
+	p.nextToken() // curTokenはExpressionの最初のtoken
+
+	stmt.Value = p.parseExpression(LOWEST)
+
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken() // SEMICOLON省略可能
 	}
 
 	return stmt
@@ -138,9 +141,10 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 
 	p.nextToken()
 
-	// TODO: parse expr
-	for !p.curTokenIs(token.SEMICOLON) {
-		p.nextToken()
+	stmt.ReturnValue = p.parseExpression(LOWEST)
+
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken() // SEMICOLON省略可能
 	}
 
 	return stmt
