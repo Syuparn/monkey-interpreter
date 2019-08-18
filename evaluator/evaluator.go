@@ -282,12 +282,16 @@ func isError(obj object.Object) bool {
 }
 
 func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object {
-	val, ok := env.Get(node.Value)
-	if !ok {
-		return newError("identifier not found: " + node.Value)
+	if val, ok := env.Get(node.Value); ok {
+		return val
 	}
 
-	return val
+	// 束縛が見つからない場合は組み込み関数を探索
+	if builtin, ok := builtins[node.Value]; ok {
+		return builtin
+	}
+
+	return newError("identifier not found: " + node.Value)
 }
 
 func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {
@@ -307,18 +311,23 @@ func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Ob
 }
 
 func applyFunction(fn object.Object, args []object.Object) object.Object {
-	function, ok := fn.(*object.Function)
-	if !ok {
+	switch fn := fn.(type) {
+	case *object.Function:
+		// 関数内スコープの名前空間に引数を束縛
+		extendedEnv := extendFunctionEnv(fn, args)
+		// スコープ内の名前空間を使用
+		evaluated := Eval(fn.Body, extendedEnv)
+		// evaluatedは*obj.ReturnValueなので、中の値を取り出して返す
+		// (そのまま返すと、スコープを全て抜け出して外側の関数の評価も中断してしまう)
+		return unWrapReturnValue(evaluated)
+
+	// 組み込み関数の呼び出し
+	case *object.Builtin:
+		// NOTE: 組み込み関数はReturnValueを返さないのでunwrapの必要なし
+		return fn.Fn(args...)
+	default:
 		return newError("not a function: %s", fn.Type())
 	}
-
-	// 関数内スコープの名前空間に引数を束縛
-	extendedEnv := extendFunctionEnv(function, args)
-	// スコープ内の名前空間を使用
-	evaluated := Eval(function.Body, extendedEnv)
-	// evaluatedは*obj.ReturnValueなので、中の値を取り出して返す
-	// (そのまま返すと、スコープを全て抜け出して外側の関数の評価も中断してしまう)
-	return unWrapReturnValue(evaluated)
 }
 
 func extendFunctionEnv(fn *object.Function, args []object.Object) *object.Environment {
