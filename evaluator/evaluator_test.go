@@ -84,6 +84,11 @@ func TestEvalBooleanExpression(t *testing.T) {
 		{"(1 < 2) == false", false},
 		{"(1 > 2) == true", false},
 		{"(1 > 2) == false", true},
+		{`"Hello" == "Hello"`, true},
+		{`"Hello" == "bye"`, false},
+		{`"Hello" == "hello"`, false},
+		{`"hello" != "bye"`, true},
+		{`"hello" != "hello"`, false},
 	}
 
 	for _, tt := range tests {
@@ -223,6 +228,10 @@ func TestErrorHandling(t *testing.T) {
 			"foobar",
 			"identifier not found: foobar",
 		},
+		{
+			`"Hello" - "world"`,
+			"unknown operator: STRING - STRING",
+		},
 	}
 
 	for _, tt := range tests {
@@ -333,5 +342,19 @@ func TestStringLiteral(t *testing.T) {
 	if str.Value != "Hello, world!" {
 		t.Errorf("String has wrong value. got=%q, expected=%q",
 			str.Value, "Hello, world!")
+	}
+}
+
+func TestStringConcatenation(t *testing.T) {
+	input := `"Hello" + " " + "world!"`
+	evaluated := testEval(input)
+	str, ok := evaluated.(*object.String)
+	if !ok {
+		t.Fatalf("object is not string got=%T (%+v)", evaluated, evaluated)
+	}
+
+	if str.Value != "Hello world!" {
+		t.Errorf("String has wrong value. got=%q, expected=%q",
+			str.Value, "Hello world!")
 	}
 }
