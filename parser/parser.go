@@ -37,6 +37,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.IF, p.parseIfExpression)
 	p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
+	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
 	p.registerInfix(token.MINUS, p.parseInfixExpression)
@@ -331,32 +332,33 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 	// 右側のcomma separated Expressionsを関連付ける => LPARENのInFixFnとして登録
 
 	exp := &ast.CallExpression{Token: p.curToken, Function: function}
-	exp.Arguments = p.parseCallArguments()
+	exp.Arguments = p.parseExpressionList(token.RPAREN)
 	return exp
 }
 
-func (p *Parser) parseCallArguments() []ast.Expression {
-	args := []ast.Expression{}
+func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
+	// NOTE: end: ')'=>引数リスト, end: ']'=>配列要素
+	list := []ast.Expression{}
 
-	if p.peekTokenIs(token.RPAREN) {
+	if p.peekTokenIs(end) {
 		p.nextToken()
-		return args
+		return list
 	}
 
 	p.nextToken()
-	args = append(args, p.parseExpression(LOWEST)) // パースは','の直前で停止
+	list = append(list, p.parseExpression(LOWEST)) // パースは','の直前で停止
 
 	for p.peekTokenIs(token.COMMA) {
 		p.nextToken() // curtokenはCOMMA
 		p.nextToken() // curtokenは次の引数の最初のtoken
-		args = append(args, p.parseExpression(LOWEST))
+		list = append(list, p.parseExpression(LOWEST))
 	}
 
-	if !p.expectPeek(token.RPAREN) {
+	if !p.expectPeek(end) {
 		return nil
 	}
 
-	return args
+	return list
 }
 
 func (p *Parser) parseGroupedExpression() ast.Expression {
@@ -376,6 +378,12 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 
 func (p *Parser) parseStringLiteral() ast.Expression {
 	return &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Literal}
+}
+
+func (p *Parser) parseArrayLiteral() ast.Expression {
+	array := &ast.ArrayLiteral{Token: p.curToken}
+	array.Elements = p.parseExpressionList(token.RBRACKET)
+	return array
 }
 
 func (p *Parser) parsePrefixExpression() ast.Expression {
