@@ -258,3 +258,36 @@ func TestLetStatements(t *testing.T) {
 		testIntegerObject(t, testEval(tt.input), tt.expected)
 	}
 }
+
+func TestFunctionObject(t *testing.T) {
+	tests := []struct {
+		input             string
+		expectedNumParams int
+		expectedBody      string
+	}{
+		{
+			"fn(x) { x + 2; };",
+			1,
+			"(x + 2)",
+		},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		fn, ok := evaluated.(*object.Function)
+		if !ok {
+			t.Fatalf("object is not function. got=%T (%+v)",
+				evaluated, evaluated)
+		}
+
+		if len(fn.Parameters) != tt.expectedNumParams {
+			t.Fatalf("function does not contain %d parameters. Parameters=%+v",
+				tt.expectedNumParams, fn.Parameters)
+		}
+
+		if fn.Body.String() != tt.expectedBody {
+			t.Fatalf("body is not %q. got=%q", tt.expectedBody, fn.Body.String())
+		}
+
+	}
+}
