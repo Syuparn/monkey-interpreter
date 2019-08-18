@@ -60,6 +60,10 @@ type Error struct {
 func (e *Error) Type() ObjectType { return ERROR_OBJ }
 func (e *Error) Inspect() string  { return "ERROR: " + e.Message }
 
+// EnvをFunctionのフィールドにしたのは、クロージャを実現するため
+// (Envに入るのは関数が作られたときの、この関数のすぐ外側の名前空間。
+// そのため、関数outer内で関数innerを生成すると、inner内ではouterの束縛は
+// 「outerの外側で呼び出されたときも」参照可能！)
 type Function struct {
 	Parameters []*ast.Identifier
 	Body       *ast.BlockStatement
