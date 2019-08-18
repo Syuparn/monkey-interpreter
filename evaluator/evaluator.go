@@ -67,6 +67,21 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		params := node.Parameters
 		body := node.Body
 		return &object.Function{Parameters: params, Env: env, Body: body}
+	case *ast.CallExpression:
+		// node.Functionは*ast.Identifierか*ast.FunctionLiteral
+		// Envは関数の外側の名前空間
+		function := Eval(node.Function, env)
+		if isError(function) {
+			return function
+		}
+		// 各引数の評価
+		args := evalExpressions(node.Arguments, env)
+		if len(args) == 1 && isError(args[0]) {
+			return args[0]
+		}
+
+		// 関数内の名前空間はenvの内側の新たなEnvironmentを参照
+		return applyFunction(function, args)
 	}
 
 	return nil
@@ -250,4 +265,53 @@ func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object
 	}
 
 	return val
+}
+
+func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {
+	var result []object.Object
+
+	// NOTE: 引数は左から順に評価(多くの言語と同様)
+	for _, e := range exps {
+		evaluated := Eval(e, env)
+		if isError(evaluated) {
+			// この関数の戻り値は配列なので、配列でラップ
+			return []object.Object{evaluated}
+		}
+		result = append(result, evaluated)
+	}
+
+	return result
+}
+
+func applyFunction(fn object.Object, args []object.Object) object.Object {
+	function, ok := fn.(*object.Function)
+	if !ok {
+		return newError("not a function: %s", fn.Type())
+	}
+
+	// 関数内スコープの名前空間に引数を束縛
+	extendedEnv := extendFunctionEnv(function, args)
+	// スコープ内の名前空間を使用
+	evaluated := Eval(function.Body, extendedEnv)
+	// evaluatedは*obj.ReturnValueなので、中の値を取り出して返す
+	// (そのまま返すと、スコープを全て抜け出して外側の関数の評価も中断してしまう)
+	return unWrapReturnValue(evaluated)
+}
+
+func extendFunctionEnv(fn *object.Function, args []object.Object) *object.Environment {
+	env := object.NewEnclosedEnvironment(fn.Env)
+
+	for paramIdx, param := range fn.Parameters {
+		env.Set(param.Value, args[paramIdx])
+	}
+
+	return env
+}
+
+func unWrapReturnValue(obj object.Object) object.Object {
+	if returnValue, ok := obj.(*object.ReturnValue); ok {
+		return returnValue.Value
+	}
+
+	return obj
 }
