@@ -28,6 +28,8 @@ const (
 
 	EQ     = "=="
 	NOT_EQ = "!="
+	GEQ    = ">="
+	LEQ    = "<="
 
 	// デリミタ
 	COMMA     = ","
