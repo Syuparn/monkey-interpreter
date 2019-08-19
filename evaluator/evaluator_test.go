@@ -99,6 +99,12 @@ func TestEvalBooleanExpression(t *testing.T) {
 		{"5 == false", false},
 		{"5 != true", true},
 		{"5 != false", true},
+		{"5 <= 10", true},
+		{"10 <= 5", false},
+		{"5 <= 5", true},
+		{"10 >= 5", true},
+		{"5 >= 10", false},
+		{"10 >= 10", true},
 	}
 
 	for _, tt := range tests {
@@ -245,6 +251,22 @@ func TestErrorHandling(t *testing.T) {
 		{
 			`{"name": "Monkey"}[fn(x) { x }];`,
 			"unusable as hash key: FUNCTION",
+		},
+		{
+			"true <= 5",
+			"type mismatch: BOOLEAN <= INTEGER",
+		},
+		{
+			"false <= false",
+			"unknown operator: BOOLEAN <= BOOLEAN",
+		},
+		{
+			"true >= 5",
+			"type mismatch: BOOLEAN >= INTEGER",
+		},
+		{
+			"false >= false",
+			"unknown operator: BOOLEAN >= BOOLEAN",
 		},
 	}
 
