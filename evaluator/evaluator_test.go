@@ -390,6 +390,12 @@ func TestBuildinFunctions(t *testing.T) {
 		{`first([1, 2], [3])`, "wrong number of arguments. got=2, want=1"},
 		{`first([])`, nil},
 		{`first([[1, 2], [3]])`, []int64{1, 2}},
+		{`last([1])`, 1},
+		{`last([1, 2, 3])`, 3},
+		{`last([[1, 2], [3, 4]])`, []int64{3, 4}},
+		{`last([1, 2], [3])`, "wrong number of arguments. got=2, want=1"},
+		{`last(1)`, "argument to `last` must be ARRAY, got INTEGER"},
+		{`last([])`, nil},
 	}
 
 	for _, tt := range tests {
