@@ -414,6 +414,14 @@ func TestBuildinFunctions(t *testing.T) {
 		{`let a = [1]; let b = push(a, 2); a;`, []int64{1}}, // no side-effect
 		{`push([1, 2])`, "wrong number of arguments. got=1, want=2"},
 		{`push(1, 1)`, "argument to `push` must be ARRAY, got INTEGER"},
+		{`puts(1)`, nil},
+		{`puts("foo")`, nil},
+		{`puts(true)`, nil},
+		{`puts([1])`, nil},
+		{`puts({"foo": "bar"})`, nil},
+		{`puts()`, nil},
+		{`puts("one", "two)"`, nil},
+		{`puts(1, "two", ["three"], {"four": "five"}, true)`, nil},
 	}
 
 	for _, tt := range tests {
