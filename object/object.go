@@ -129,13 +129,24 @@ type String struct {
 
 func (s *String) Type() ObjectType { return STRING_OBJ }
 func (s *String) Inspect() string  { return s.Value }
+
+// NOTE: 過去に計算したhashkeyをキャッシュすることでString.HashKey()を
+// 1.2~8倍高速化 (詳細はcashhashkey_test.go)
+var stringHashKeyCashes = make(map[string]HashKey)
+
 func (s *String) HashKey() HashKey {
 	// NOTE: ごくまれに別の文字列に同じ整数が与えられてしまう(ハッシュの衝突)
 	// 実用上問題ないが、絶対に一意にするには「チェイン法」、「オープンアドレス法」用いる
-	h := fnv.New64a()
-	h.Write([]byte(s.Value))
 
-	return HashKey{Type: s.Type(), Value: h.Sum64()}
+	// hashkey既に求めていたら使い回し
+	if hashKey, ok := stringHashKeyCashes[s.Value]; ok {
+		return hashKey
+	} else {
+		h := fnv.New64a()
+		h.Write([]byte(s.Value))
+
+		return HashKey{Type: s.Type(), Value: h.Sum64()}
+	}
 }
 
 type BuiltinFunction func(args ...Object) Object
