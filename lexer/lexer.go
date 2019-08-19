@@ -113,6 +113,8 @@ func (l *Lexer) NextToken() token.Token {
 	case '"':
 		tok.Type = token.STRING
 		tok.Literal = l.readString()
+	case ':':
+		tok = newToken(token.COMMA, l.ch)
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF //newTokenで生成しないのは、null文字をstringで変換できないため？
