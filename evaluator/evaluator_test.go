@@ -384,6 +384,12 @@ func TestBuildinFunctions(t *testing.T) {
 		{`len([1, 2, 3, 4])`, 4},
 		{`len([[1, 2], [3, 4]])`, 2},
 		{`len([1, 2], [3])`, "wrong number of arguments. got=2, want=1"},
+		{`first([1])`, 1},
+		{`first([2, 3])`, 2},
+		{`first(1)`, "argument to `first` must be ARRAY, got INTEGER"},
+		{`first([1, 2], [3])`, "wrong number of arguments. got=2, want=1"},
+		{`first([])`, nil},
+		{`first([[1, 2], [3]])`, []int64{1, 2}},
 	}
 
 	for _, tt := range tests {
@@ -404,8 +410,34 @@ func TestBuildinFunctions(t *testing.T) {
 				t.Errorf("wrong error message. expected=%q, got=%q",
 					expected, errObj.Message)
 			}
+		case nil:
+			testNullObject(t, evaluated)
+		case []int64:
+			testIntegerArray(t, evaluated, expected)
 		}
 	}
+}
+
+func testIntegerArray(t *testing.T, evaluated object.Object, expected []int64) bool {
+	array, ok := evaluated.(*object.Array)
+	if !ok {
+		t.Fatalf("object is not array. got=%T (%+v)", evaluated, evaluated)
+		return false
+	}
+
+	if len(array.Elements) != len(expected) {
+		t.Fatalf("array has wrong num of elements. got=%d (%+v), want=%d",
+			len(array.Elements), array.Elements, len(expected))
+		return false
+	}
+
+	for i, exp := range expected {
+		if !testIntegerObject(t, array.Elements[i], exp) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func TestArrayLiteral(t *testing.T) {
