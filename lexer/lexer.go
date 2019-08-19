@@ -129,6 +129,24 @@ func (l *Lexer) NextToken() token.Token {
 		tok.Literal = l.readString()
 	case ':':
 		tok = newToken(token.COLON, l.ch)
+	case '&':
+		if l.peekChar() == '&' { // "&&"
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.AND, Literal: literal}
+		} else {
+			tok = newToken(token.ILLEGAL, l.ch)
+		}
+	case '|':
+		if l.peekChar() == '|' { // "||"
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.OR, Literal: literal}
+		} else {
+			tok = newToken(token.ILLEGAL, l.ch)
+		}
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF //newTokenで生成しないのは、null文字をstringで変換できないため？

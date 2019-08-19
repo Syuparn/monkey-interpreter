@@ -30,6 +30,8 @@ const (
 	NOT_EQ = "!="
 	GEQ    = ">="
 	LEQ    = "<="
+	AND    = "&&"
+	OR     = "||"
 
 	// デリミタ
 	COMMA     = ","
