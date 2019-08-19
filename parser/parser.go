@@ -50,6 +50,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.GT, p.parseInfixExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
+	p.registerInfix(token.LEQ, p.parseInfixExpression)
+	p.registerInfix(token.GEQ, p.parseInfixExpression)
 
 	p.nextToken()
 	p.nextToken()
@@ -479,6 +481,8 @@ const ( // op priority
 var precedences = map[token.TokenType]int{
 	token.EQ:       EQUALS,
 	token.NOT_EQ:   EQUALS,
+	token.LEQ:      EQUALS,
+	token.GEQ:      EQUALS,
 	token.LT:       LESSGREATER,
 	token.GT:       LESSGREATER,
 	token.PLUS:     SUM,
