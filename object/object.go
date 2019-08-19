@@ -4,8 +4,24 @@ import (
 	"../ast"
 	"bytes"
 	"fmt"
+	"hash/fnv"
 	"strings"
 )
+
+// NOTE: HashKey()によるハッシュの要素探索
+// {"name": "Taro"}["name"]
+// 直接Objectどうしを比較しても、.Valueが同じでも別のポインタであるため参照不可能
+// &String{Value: "name"} != &String{Value: "name"}
+// 一方、全てのkeyの.Valueを使って照合する場合O(n)かかる…
+// => ハッシュキーによりObjectの同値性を確かめる
+type HashKey struct {
+	Type  ObjectType // Valueが偶然同じでも、型が違えばハッシュキーは等しくない
+	Value uint64
+}
+
+type Hashable interface {
+	HashKey() HashKey
+}
 
 // monkeyでは、評価された値の内部表現は全てObjectで表される
 type ObjectType string
@@ -20,6 +36,7 @@ const (
 	STRING_OBJ       = "STRING"
 	BUILDIN_OBJ      = "BUILTIN"
 	ARRAY_OBJ        = "ARRAY"
+	HASH_OBJ         = "HASH"
 )
 
 // NOTE: 内部表現によってフィールドが違う(boolとint等)のでstructではなくinterface
@@ -34,6 +51,9 @@ type Integer struct {
 
 func (i *Integer) Type() ObjectType { return INTEGER_OBJ }
 func (i *Integer) Inspect() string  { return fmt.Sprintf("%d", i.Value) }
+func (i *Integer) HashKey() HashKey {
+	return HashKey{Type: i.Type(), Value: uint64(i.Value)}
+}
 
 type Boolean struct {
 	Value bool
@@ -41,6 +61,17 @@ type Boolean struct {
 
 func (b *Boolean) Type() ObjectType { return BOOLEAN_OBJ }
 func (b *Boolean) Inspect() string  { return fmt.Sprintf("%t", b.Value) }
+func (b *Boolean) HashKey() HashKey {
+	var value uint64
+
+	if b.Value {
+		value = 1
+	} else {
+		value = 0
+	}
+
+	return HashKey{Type: b.Type(), Value: value}
+}
 
 type Null struct{}
 
@@ -98,6 +129,14 @@ type String struct {
 
 func (s *String) Type() ObjectType { return STRING_OBJ }
 func (s *String) Inspect() string  { return s.Value }
+func (s *String) HashKey() HashKey {
+	// NOTE: ごくまれに別の文字列に同じ整数が与えられてしまう(ハッシュの衝突)
+	// 実用上問題ないが、絶対に一意にするには「チェイン法」、「オープンアドレス法」用いる
+	h := fnv.New64a()
+	h.Write([]byte(s.Value))
+
+	return HashKey{Type: s.Type(), Value: h.Sum64()}
+}
 
 type BuiltinFunction func(args ...Object) Object
 
@@ -124,6 +163,33 @@ func (a *Array) Inspect() string {
 	out.WriteString("[")
 	out.WriteString(strings.Join(elements, ", "))
 	out.WriteString("]")
+
+	return out.String()
+}
+
+type HashPair struct {
+	Key   Object
+	Value Object
+}
+
+// NOTE: map[HashKey]Objectとしてもハッシュにはなるが、keyを参照しづらくなる
+// イテレートするときやkeyとのペアを取得するにはHashPairがあるほうが都合がいい
+type Hash struct {
+	Pairs map[HashKey]HashPair
+}
+
+func (h *Hash) Type() ObjectType { return HASH_OBJ }
+func (h *Hash) Inspect() string {
+	var out bytes.Buffer
+
+	pairs := []string{}
+	for _, pair := range h.Pairs {
+		pairs = append(pairs, pair.Key.Inspect()+": "+pair.Value.Inspect())
+	}
+
+	out.WriteString("{")
+	out.WriteString(strings.Join(pairs, ", "))
+	out.WriteString("}")
 
 	return out.String()
 }
