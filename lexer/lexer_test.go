@@ -119,7 +119,7 @@ func TestNextToken(t *testing.T) {
 		{token.SEMICOLON, ";"},
 		{token.LBRACE, "{"},
 		{token.STRING, "foo"},
-		{token.COMMA, ":"},
+		{token.COLON, ":"},
 		{token.STRING, "bar"},
 		{token.RBRACE, "}"},
 		{token.EOF, ""},
