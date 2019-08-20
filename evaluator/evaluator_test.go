@@ -27,6 +27,10 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"3 * 3 * 3 + 10", 37},
 		{"3 * (3 * 3) + 10", 37},
 		{"(5 + 10 * 2 + 15 / 3) * 2 + -10", 50},
+		{"1 && 2", 2},
+		{"0 && 10", 10},
+		{"1 || 2", 1},
+		{"true && 2 || 3", 2},
 	}
 
 	for _, tt := range tests {
@@ -105,6 +109,15 @@ func TestEvalBooleanExpression(t *testing.T) {
 		{"10 >= 5", true},
 		{"5 >= 10", false},
 		{"10 >= 10", true},
+		{"true && true", true},
+		{"true && false", false},
+		{"false && false", false},
+		{"true || true", true},
+		{"true || false", true},
+		{"false || false", false},
+		// 短絡評価 (未定義変数は評価されないのでエラー吐かない)
+		{"false && unknownVar", false},
+		{"true || unknownVar", true},
 	}
 
 	for _, tt := range tests {

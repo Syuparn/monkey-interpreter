@@ -52,6 +52,10 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 		return evalPrefixExpression(node.Operator, right)
 	case *ast.InfixExpression:
+		if isShortCutOperator(node.Operator) {
+			return evalShortCutInfixExpression(node, env)
+		}
+
 		left := Eval(node.Left, env)
 		if isError(left) {
 			return left
@@ -434,4 +438,40 @@ func evalHashIndexExpression(hash, index object.Object) object.Object {
 	}
 
 	return pair.Value
+}
+
+func isShortCutOperator(op string) bool {
+	switch op {
+	case "&&", "||":
+		return true
+	default:
+		return false
+	}
+}
+
+func evalShortCutInfixExpression(node *ast.InfixExpression,
+	env *object.Environment) object.Object {
+
+	left := Eval(node.Left, env)
+	if isError(left) {
+		return left
+	}
+
+	if canShortCut(node.Operator, left) {
+		return left
+	}
+
+	// NOTE: エラー返却もこの一行で済む
+	return Eval(node.Right, env)
+}
+
+func canShortCut(operator string, left object.Object) bool {
+	switch operator {
+	case "&&":
+		return !isTruthy(left)
+	case "||":
+		return isTruthy(left)
+	default:
+		return false
+	}
 }
