@@ -52,6 +52,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
 	p.registerInfix(token.LEQ, p.parseInfixExpression)
 	p.registerInfix(token.GEQ, p.parseInfixExpression)
+	p.registerInfix(token.AND, p.parseInfixExpression)
+	p.registerInfix(token.OR, p.parseInfixExpression)
 
 	p.nextToken()
 	p.nextToken()
@@ -466,9 +468,15 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	return expression
 }
 
+// NOTE: ANDがORより優先順位が高いのは、他の多くの言語の仕様と合わせたため
+// 数学的にも論理積は論理和より優先順位が高い[↓]ためこれに倣う
+// https://en.wikipedia.org/wiki/Logical_connective#Order_of_precedence
+
 const ( // op priority
 	_ int = iota
 	LOWEST
+	OR          // ||
+	AND         // &&
 	EQUALS      // ==
 	LESSGREATER // <, >
 	SUM         // +
@@ -491,6 +499,8 @@ var precedences = map[token.TokenType]int{
 	token.ASTERISK: PRODUCT,
 	token.LPAREN:   CALL,
 	token.LBRACKET: INDEX,
+	token.AND:      AND,
+	token.OR:       OR,
 }
 
 func (p *Parser) peekPrecedence() int {

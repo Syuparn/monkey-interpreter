@@ -242,6 +242,8 @@ func TestParsingInfixExpressions(t *testing.T) {
 		{"false == false", false, "==", false},
 		{"5 <= 5", 5, "<=", 5},
 		{"5 >= 5", 5, ">=", 5},
+		{"true && true", true, "&&", true},
+		{"true || false", true, "||", false},
 	}
 
 	for _, tt := range infixTests {
@@ -389,6 +391,19 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		{
 			"4 == 4 <= 5 == 5",
 			"(((4 == 4) <= 5) == 5)",
+		},
+		{
+			"1 != 2 + 3 && 4 == 4",
+			"((1 != (2 + 3)) && (4 == 4))",
+		},
+		{
+			"1 != 2 + 3 || 4 == 4",
+			"((1 != (2 + 3)) || (4 == 4))",
+		},
+		// NOTE: 他の多くの言語と同じく、andはorよりも優先順位が高い
+		{
+			"true || true && false",
+			"(true || (true && false))",
 		},
 	}
 
