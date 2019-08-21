@@ -45,7 +45,7 @@ func (l *Lexer) skipWhiteSpace() {
 
 // 次の文字をのぞき見(peek) (readCharと違い読み進めない)
 func (l *Lexer) peekChar() byte {
-	if l.position >= len(l.input) {
+	if l.readPosition >= len(l.input) {
 		return 0
 	} else {
 		return l.input[l.readPosition]
