@@ -678,3 +678,95 @@ func TestHashIndexExpressions(t *testing.T) {
 		}
 	}
 }
+
+func TestNameSpaceLiteral(t *testing.T) {
+	tests := []struct {
+		input          string
+		expectedIdents []string
+		expectedVals   []interface{}
+	}{
+		{
+			`
+			namespace {
+				let x = 1;
+				let cond = true;
+				let y = x + 2;
+			}
+			`,
+			[]string{"x", "cond", "y"},
+			[]interface{}{1, true, 3},
+		},
+		{
+			`
+			let mySpace = namespace { let x = 1; };
+			mySpace;
+			`,
+			[]string{"x"},
+			[]interface{}{1},
+		},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+
+		nameSpace, ok := evaluated.(*object.NameSpace)
+		if !ok {
+			t.Fatalf("Eval didn't return NameSpace. return=%T (%+v)",
+				evaluated, evaluated)
+		}
+
+		for i, ident := range tt.expectedIdents {
+			val, ok := nameSpace.Env.Get(ident)
+			if !ok {
+				t.Errorf("identifier %s wasn't bound to NameSpace", ident)
+			}
+
+			switch expectedVal := tt.expectedVals[i].(type) {
+			case int:
+				testIntegerObject(t, val, int64(expectedVal))
+			case bool:
+				testBooleanObject(t, val, expectedVal)
+			}
+		}
+	}
+}
+
+//func TestNameSpaceLiteralNesting(t *testing.T) {
+// .演算子実装したらかく
+//}
+
+func TestNameSpaceLiteralScopes(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{
+			`
+			let mySpace = namespace { let x = 10; };
+			let x = 1;
+			x;
+			`,
+			1,
+		},
+		{
+			`
+			let x = 1;
+			let mySpace = namespace { let x = 10; };
+			x;
+			`,
+			1,
+		},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+
+		integer, ok := evaluated.(*object.Integer)
+		if !ok {
+			t.Fatalf("Eval didn't return Integer. got=%T (%+v)",
+				evaluated, evaluated)
+		}
+
+		testIntegerObject(t, integer, tt.expected)
+	}
+}

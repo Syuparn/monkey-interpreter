@@ -1,5 +1,11 @@
 package object
 
+import (
+	"bytes"
+	"fmt"
+	"strings"
+)
+
 func NewEnvironment() *Environment {
 	s := make(map[string]Object)
 	return &Environment{store: s}
@@ -23,6 +29,20 @@ func (e *Environment) Get(name string) (Object, bool) {
 func (e *Environment) Set(name string, val Object) Object {
 	e.store[name] = val
 	return val
+}
+
+func (e *Environment) Inspect() string {
+	var out bytes.Buffer
+	pairs := []string{}
+	for k, v := range e.store {
+		pairs = append(pairs, fmt.Sprintf("%s: %s", k, v.Inspect()))
+	}
+
+	out.WriteString("{")
+	out.WriteString(strings.Join(pairs, ", "))
+	out.WriteString("}")
+
+	return out.String()
 }
 
 func NewEnclosedEnvironment(outer *Environment) *Environment {

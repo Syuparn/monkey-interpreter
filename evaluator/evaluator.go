@@ -106,6 +106,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalIndexExpression(left, index)
 	case *ast.HashLiteral:
 		return evalHashLiteral(node, env)
+	case *ast.NameSpaceLiteral:
+		return evalNameSpaceLiteral(node, env)
 	}
 
 	return nil
@@ -474,4 +476,13 @@ func canShortCut(operator string, left object.Object) bool {
 	default:
 		return false
 	}
+}
+
+func evalNameSpaceLiteral(node *ast.NameSpaceLiteral,
+	outerEnv *object.Environment) object.Object {
+
+	env := object.NewEnclosedEnvironment(outerEnv)
+	Eval(node.Body, env)
+
+	return &object.NameSpace{Env: env}
 }

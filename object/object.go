@@ -37,6 +37,7 @@ const (
 	BUILDIN_OBJ      = "BUILTIN"
 	ARRAY_OBJ        = "ARRAY"
 	HASH_OBJ         = "HASH"
+	NAMESPACE_OBJ    = "NAMESPACE"
 )
 
 // NOTE: 内部表現によってフィールドが違う(boolとint等)のでstructではなくinterface
@@ -201,6 +202,19 @@ func (h *Hash) Inspect() string {
 	out.WriteString("{")
 	out.WriteString(strings.Join(pairs, ", "))
 	out.WriteString("}")
+
+	return out.String()
+}
+
+type NameSpace struct {
+	Env *Environment
+}
+
+func (ns *NameSpace) Type() ObjectType { return NAMESPACE_OBJ }
+func (ns *NameSpace) Inspect() string {
+	var out bytes.Buffer
+	out.WriteString("namespace ")
+	out.WriteString(ns.Env.Inspect())
 
 	return out.String()
 }
