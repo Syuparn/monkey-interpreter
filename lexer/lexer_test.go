@@ -35,6 +35,8 @@ func TestNextToken(t *testing.T) {
 	10 >= 9;
 	true && true
 	true || false
+
+	namespace{}
 	`
 
 	tests := []struct {
@@ -141,6 +143,9 @@ func TestNextToken(t *testing.T) {
 		{token.TRUE, "true"},
 		{token.OR, "||"},
 		{token.FALSE, "false"},
+		{token.NAMESPACE, "namespace"},
+		{token.LBRACE, "{"},
+		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	}
 
