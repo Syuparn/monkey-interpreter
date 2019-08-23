@@ -346,3 +346,19 @@ func (hl *HashLiteral) String() string {
 
 	return out.String()
 }
+
+type NameSpaceLiteral struct {
+	Token token.Token // 'namespace' token
+	Body  *BlockStatement
+}
+
+func (ns *NameSpaceLiteral) expressionNode()      {}
+func (ns *NameSpaceLiteral) TokenLiteral() string { return ns.Token.Literal }
+func (ns *NameSpaceLiteral) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("namespace ")
+	out.WriteString(ns.Body.String())
+
+	return out.String()
+}

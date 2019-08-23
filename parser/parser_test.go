@@ -945,6 +945,41 @@ func TestParsingHashLiteralsWithExpressions(t *testing.T) {
 	}
 }
 
+func TestParsingNameSpaceLiterals(t *testing.T) {
+	input := `namespace { let x = 1; }`
+	program := testParse(t, input)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program does not contain %d statements. got=%d",
+			1, len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
+			program.Statements[0])
+	}
+
+	nameSpace, ok := stmt.Expression.(*ast.NameSpaceLiteral)
+	if !ok {
+		t.Fatalf("stmt.Expression is not ast.NameSpaceLiteral. got=%T",
+			stmt.Expression)
+	}
+
+	if len(nameSpace.Body.Statements) != 1 {
+		t.Fatalf("nameSpace.Body.Statements has not %d statements. got=%d",
+			1, len(nameSpace.Body.Statements))
+	}
+
+	letStmt, ok := nameSpace.Body.Statements[0].(*ast.LetStatement)
+	if !ok {
+		t.Fatalf("function.Body.Statements is not ast.LetStatement. got=%T",
+			nameSpace.Body.Statements[0])
+	}
+
+	testLetStatement(t, letStmt, "x", 1)
+}
+
 func checkParserErrors(t *testing.T, p *Parser) {
 	errors := p.Errors()
 	if len(errors) == 0 {
