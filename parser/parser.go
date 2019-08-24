@@ -55,6 +55,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.GEQ, p.parseInfixExpression)
 	p.registerInfix(token.AND, p.parseInfixExpression)
 	p.registerInfix(token.OR, p.parseInfixExpression)
+	p.registerInfix(token.DOT, p.parseInfixExpression)
 
 	p.nextToken()
 	p.nextToken()
@@ -512,6 +513,7 @@ var precedences = map[token.TokenType]int{
 	token.SLASH:    PRODUCT,
 	token.ASTERISK: PRODUCT,
 	token.LPAREN:   CALL,
+	token.DOT:      CALL,
 	token.LBRACKET: INDEX,
 	token.AND:      AND,
 	token.OR:       OR,

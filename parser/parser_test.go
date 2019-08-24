@@ -244,6 +244,7 @@ func TestParsingInfixExpressions(t *testing.T) {
 		{"5 >= 5", 5, ">=", 5},
 		{"true && true", true, "&&", true},
 		{"true || false", true, "||", false},
+		{"hoge.fuga", "hoge", ".", "fuga"},
 	}
 
 	for _, tt := range infixTests {
@@ -404,6 +405,26 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		{
 			"true || true && false",
 			"(true || (true && false))",
+		},
+		{
+			"1 == foo.bar",
+			"(1 == (foo . bar))",
+		},
+		{
+			"3 * hoge.fuga + 2",
+			"((3 * (hoge . fuga)) + 2)",
+		},
+		{
+			"f(pos).x",
+			"(f(pos) . x)",
+		},
+		{
+			"-math.abs(x)",
+			"(-(math . abs)(x))",
+		},
+		{
+			"f().value()",
+			"(f() . value)()",
 		},
 	}
 
