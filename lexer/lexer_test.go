@@ -37,6 +37,7 @@ func TestNextToken(t *testing.T) {
 	true || false
 
 	namespace{}
+	taro.name
 	`
 
 	tests := []struct {
@@ -146,6 +147,9 @@ func TestNextToken(t *testing.T) {
 		{token.NAMESPACE, "namespace"},
 		{token.LBRACE, "{"},
 		{token.RBRACE, "}"},
+		{token.IDENT, "taro"},
+		{token.DOT, "."},
+		{token.IDENT, "name"},
 		{token.EOF, ""},
 	}
 
