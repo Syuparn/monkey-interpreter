@@ -150,7 +150,9 @@ func (s *String) HashKey() HashKey {
 	}
 }
 
-type BuiltinFunction func(args ...Object) Object
+// NOTE: envを引数に追加
+// (import, self, outer等は、評価の際今のスコープを知る必要があるため)
+type BuiltinFunction func(env *Environment, args ...Object) Object
 
 type Builtin struct {
 	Fn BuiltinFunction

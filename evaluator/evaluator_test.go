@@ -457,6 +457,7 @@ func TestBuildinFunctions(t *testing.T) {
 		{`puts()`, nil},
 		{`puts("one", "two)"`, nil},
 		{`puts(1, "two", ["three"], {"four": "five"}, true)`, nil},
+		// NOTE: self(), outer()は戻り値の型が特殊なので別関数でテスト
 	}
 
 	for _, tt := range tests {
@@ -481,6 +482,89 @@ func TestBuildinFunctions(t *testing.T) {
 			testNullObject(t, evaluated)
 		case []int64:
 			testIntegerArray(t, evaluated, expected)
+		}
+	}
+}
+
+func TestBuildinNameSpaceFunctions(t *testing.T) {
+	tests := []struct {
+		input        string
+		expectedType object.ObjectType
+		expected     string
+	}{
+		{
+
+			`
+			let x = 3;
+			self();
+			`,
+			object.NAMESPACE_OBJ,
+			`namespace {x: 3}`,
+		},
+		{
+			`
+			fn() {
+				let x = 3;
+				self();
+			}();
+			`,
+			object.NAMESPACE_OBJ,
+			`namespace {x: 3}`,
+		},
+		{
+			`self(1);`,
+			object.ERROR_OBJ,
+			`wrong number of arguments. got=1, want=0`,
+		},
+		{
+			`
+			let x = 3;
+			fn() { outer() }();
+			`,
+			object.NAMESPACE_OBJ,
+			`namespace {x: 3}`,
+		},
+		{
+			`outer(1);`,
+			object.ERROR_OBJ,
+			`wrong number of arguments. got=1, want=0`,
+		},
+		{
+			`outer();`,
+			object.NULL_OBJ,
+			`null`,
+		},
+		// TODO namespace内のouterと"."演算子での関数呼び出しの組み合わせ
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+
+		switch tt.expectedType {
+		case object.NAMESPACE_OBJ:
+			nameSpace, ok := evaluated.(*object.NameSpace)
+			if !ok {
+				t.Fatalf("Eval didn't return NameSpace. got=%T (%+v)",
+					evaluated, evaluated)
+			}
+
+			if nameSpace.Inspect() != tt.expected {
+				t.Fatalf("nameSpace has wrong Env. want=%q, got=%q",
+					tt.expected, nameSpace.Inspect())
+			}
+		case object.ERROR_OBJ:
+			errObj, ok := evaluated.(*object.Error)
+			if !ok {
+				t.Fatalf("Eval didn't return Error. got=%T (%+v)",
+					evaluated, evaluated)
+			}
+
+			if errObj.Message != tt.expected {
+				t.Fatalf("errObj returned wrong message. want=%q, got=%q",
+					tt.expected, errObj.Message)
+			}
+		case object.NULL_OBJ:
+			testNullObject(t, evaluated)
 		}
 	}
 }

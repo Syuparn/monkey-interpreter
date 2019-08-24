@@ -45,6 +45,11 @@ func (e *Environment) Inspect() string {
 	return out.String()
 }
 
+// 組み込み関数outer()の評価に必要なためgetterとして追加
+func (e *Environment) Outer() *Environment {
+	return e.outer
+}
+
 func NewEnclosedEnvironment(outer *Environment) *Environment {
 	// 関数内等のローカルな名前空間を返す
 	env := NewEnvironment()

@@ -5,9 +5,11 @@ import (
 	"fmt"
 )
 
+// NOTE: envを引数に追加
+// (import, self, outer等は、評価の際今のスコープを知る必要があるため)
 var builtins = map[string]*object.Builtin{
 	"len": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
@@ -25,7 +27,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"first": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
@@ -44,7 +46,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"last": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
@@ -64,7 +66,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"rest": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
@@ -86,7 +88,7 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"push": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
 			if len(args) != 2 {
 				return newError("wrong number of arguments. got=%d, want=2",
 					len(args))
@@ -107,12 +109,36 @@ var builtins = map[string]*object.Builtin{
 		},
 	},
 	"puts": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
 			for _, arg := range args {
 				fmt.Println(arg.Inspect())
 			}
 
 			return NULL
+		},
+	},
+	"self": &object.Builtin{
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
+			if len(args) != 0 {
+				return newError("wrong number of arguments. got=%d, want=0",
+					len(args))
+			}
+
+			return &object.NameSpace{Env: env}
+		},
+	},
+	"outer": &object.Builtin{
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
+			if len(args) != 0 {
+				return newError("wrong number of arguments. got=%d, want=0",
+					len(args))
+			}
+
+			if env.Outer() == nil {
+				return NULL
+			}
+
+			return &object.NameSpace{Env: env.Outer()}
 		},
 	},
 }

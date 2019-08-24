@@ -87,7 +87,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 
 		// 関数内の名前空間はenvの内側の新たなEnvironmentを参照
-		return applyFunction(function, args)
+		return applyFunction(function, args, env)
 	case *ast.ArrayLiteral:
 		elements := evalExpressions(node.Elements, env)
 		if len(elements) == 1 && isError(elements[0]) {
@@ -338,7 +338,9 @@ func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Ob
 	return result
 }
 
-func applyFunction(fn object.Object, args []object.Object) object.Object {
+func applyFunction(fn object.Object, args []object.Object,
+	env *object.Environment) object.Object {
+
 	switch fn := fn.(type) {
 	case *object.Function:
 		// 関数内スコープの名前空間に引数を束縛
@@ -352,7 +354,7 @@ func applyFunction(fn object.Object, args []object.Object) object.Object {
 	// 組み込み関数の呼び出し
 	case *object.Builtin:
 		// NOTE: 組み込み関数はReturnValueを返さないのでunwrapの必要なし
-		return fn.Fn(args...)
+		return fn.Fn(env, args...)
 	default:
 		return newError("not a function: %s", fn.Type())
 	}
