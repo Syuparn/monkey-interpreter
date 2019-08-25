@@ -206,7 +206,9 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 		return evalIntegerInfixExpression(operator, left, right)
 	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
 		return evalStringInfixExpression(operator, left, right)
-	// NOTE: 真偽値,nullは同一オブジェクトへの参照なので、left, rightが同一か否か調べれば
+	case left.Type() == object.NAMESPACE_OBJ && right.Type() == object.NAMESPACE_OBJ:
+		return evalNameSpaceInfixExpression(operator, left, right)
+		// NOTE: 真偽値,nullは同一オブジェクトへの参照なので、left, rightが同一か否か調べれば
 	// (=「ポインタ」どうしを比較すれば)両者の「値」が等しいかどうか分かる
 	// (上のcase文から、left,rightいずれかはBooleanかNullなので想定通り動く)
 	case operator == "==":
@@ -492,6 +494,23 @@ func evalNameSpaceLiteral(node *ast.NameSpaceLiteral,
 	Eval(node.Body, env)
 
 	return &object.NameSpace{Env: env}
+}
+
+func evalNameSpaceInfixExpression(operator string,
+	left, right object.Object) object.Object {
+
+	leftVal := left.(*object.NameSpace)
+	rightVal := right.(*object.NameSpace)
+
+	switch operator {
+	case "==":
+		return nativeBoolToBooleanObject(leftVal.Env == rightVal.Env)
+	case "!=":
+		return nativeBoolToBooleanObject(leftVal.Env != rightVal.Env)
+	default:
+		return newError("unknown operator: %s %s %s",
+			left.Type(), operator, right.Type())
+	}
 }
 
 func evalCallInfixExpression(node *ast.InfixExpression,

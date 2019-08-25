@@ -283,15 +283,15 @@ func TestErrorHandling(t *testing.T) {
 		},
 		{
 			"true.5",
-			"unknown operator: BOOLEAN . INTEGER",
+			"type mismatch: BOOLEAN . INTEGER",
 		},
 		{
 			`"string".false`,
-			"unknown operator: STRING . BOOLEAN",
+			"type mismatch: STRING . BOOLEAN",
 		},
 		{
 			"5.true",
-			"unknown operator: INTEGER . BOOLEAN",
+			"type mismatch: INTEGER . BOOLEAN",
 		},
 		{
 			"true.true",
