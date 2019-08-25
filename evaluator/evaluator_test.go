@@ -281,6 +281,26 @@ func TestErrorHandling(t *testing.T) {
 			"false >= false",
 			"unknown operator: BOOLEAN >= BOOLEAN",
 		},
+		{
+			"true.5",
+			"unknown operator: BOOLEAN . INTEGER",
+		},
+		{
+			`"string".false`,
+			"unknown operator: STRING . BOOLEAN",
+		},
+		{
+			"5.true",
+			"unknown operator: INTEGER . BOOLEAN",
+		},
+		{
+			"true.true",
+			"unknown operator: BOOLEAN . BOOLEAN",
+		},
+		{
+			`"string"."string"`,
+			"unknown operator: STRING . STRING",
+		},
 	}
 
 	for _, tt := range tests {
@@ -457,7 +477,9 @@ func TestBuildinFunctions(t *testing.T) {
 		{`puts()`, nil},
 		{`puts("one", "two)"`, nil},
 		{`puts(1, "two", ["three"], {"four": "five"}, true)`, nil},
-		// NOTE: self(), outer()は戻り値の型が特殊なので別関数でテスト
+		// NOTE: 戻り値の型がNameSpaceのテストはTestBuildinNameSpaceFunctionsで行う
+		{`fn() { outer(); }() == self()`, true},
+		{`(namespace { let o = outer(); }).o == self()`, true},
 	}
 
 	for _, tt := range tests {
@@ -466,6 +488,8 @@ func TestBuildinFunctions(t *testing.T) {
 		switch expected := tt.expected.(type) {
 		case int:
 			testIntegerObject(t, evaluated, int64(expected))
+		case bool:
+			testBooleanObject(t, evaluated, expected)
 		case string:
 			errObj, ok := evaluated.(*object.Error)
 			if !ok {
@@ -508,6 +532,11 @@ func TestBuildinNameSpaceFunctions(t *testing.T) {
 				self();
 			}();
 			`,
+			object.NAMESPACE_OBJ,
+			`namespace {x: 3}`,
+		},
+		{
+			`fn(x) { self(); }(3);`,
 			object.NAMESPACE_OBJ,
 			`namespace {x: 3}`,
 		},
@@ -788,6 +817,15 @@ func TestNameSpaceLiteral(t *testing.T) {
 			[]string{"x"},
 			[]interface{}{1},
 		},
+		{
+			`
+			let mySpace = namespace { let x = 1; };
+			let alias = mySpace;
+			alias;
+			`,
+			[]string{"x"},
+			[]interface{}{1},
+		},
 	}
 
 	for _, tt := range tests {
@@ -815,9 +853,69 @@ func TestNameSpaceLiteral(t *testing.T) {
 	}
 }
 
-//func TestNameSpaceLiteralNesting(t *testing.T) {
-// .演算子実装したらかく
-//}
+func TestNameSpaceAsOOP(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{
+			`
+			let Person = namespace {
+				let new = fn(age) { self(); };
+			};
+			let person = Person.new(20);
+			person.age;
+			`,
+			20,
+		},
+		{
+			`
+			let Person = namespace {
+				let new = fn(age) { self(); };
+				let canDrink = fn() { age >= 20; };
+			};
+			let person = Person.new(30);
+			person.canDrink();
+			`,
+			true,
+		},
+		{
+			// namespaceはimmutableなので、代わりに値の違う新たなnamespaceを返す
+			`
+			let Person = namespace {
+				let new = fn(age) { self(); };
+				let reachBirthDay = fn() { outer().new(age + 1); };
+			};
+			let person = Person.new(14);
+			let person = person.reachBirthDay();
+			person.age;
+			`,
+			15,
+		},
+		{
+			`
+			let Person = namespace {
+				let new = fn(age) { self(); };
+				let isOlder = fn(other) { age > other.age };
+			};
+			let mike = Person.new(14);
+			let judy = Person.new(18);
+			judy.isOlder(mike);
+			`,
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		switch expected := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(expected))
+		case bool:
+			testBooleanObject(t, evaluated, expected)
+		}
+	}
+}
 
 func TestNameSpaceLiteralScopes(t *testing.T) {
 	tests := []struct {
@@ -852,5 +950,59 @@ func TestNameSpaceLiteralScopes(t *testing.T) {
 		}
 
 		testIntegerObject(t, integer, tt.expected)
+	}
+}
+
+func TestEvalDotExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{
+			`
+			let mySpace = namespace {
+				let five = 5;
+			};
+			mySpace.five;
+			`,
+			5,
+		},
+		{
+			`
+			let mySpace = namespace {
+				let five = fn() { 5; };
+			};
+			mySpace.five();
+			`,
+			5,
+		},
+		{
+			`
+			let mySpace = namespace {
+				let childSpace = namespace {
+					let five = 5;
+				};
+			};
+			mySpace.childSpace.five;
+			`,
+			5,
+		},
+		{
+			`let mySpace = namespace {
+				let five = 5;
+			};
+			let f = fn() { mySpace; };
+			f().five;
+			`,
+			5,
+		},
+		{
+			`namespace { let x = 5; }.x;`,
+			5,
+		},
+	}
+
+	for _, tt := range tests {
+		testIntegerObject(t, testEval(tt.input), tt.expected)
 	}
 }

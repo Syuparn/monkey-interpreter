@@ -56,6 +56,11 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return evalShortCutInfixExpression(node, env)
 		}
 
+		// "."演算子は左辺と右辺をばらして評価できないため別関数で処理
+		if evaluated, ok := evalCallInfixExpression(node, env); ok {
+			return evaluated
+		}
+
 		left := Eval(node.Left, env)
 		if isError(left) {
 			return left
@@ -487,4 +492,58 @@ func evalNameSpaceLiteral(node *ast.NameSpaceLiteral,
 	Eval(node.Body, env)
 
 	return &object.NameSpace{Env: env}
+}
+
+func evalCallInfixExpression(node *ast.InfixExpression,
+	env *object.Environment) (object.Object, bool) {
+
+	// 呼び出しエラーが起きた際に、左辺の束縛も表示するために利用
+	var nameSpaceIdent string
+	if _, ok := node.Left.(*ast.Identifier); ok {
+		nameSpaceIdent = node.Left.String()
+	} else {
+		nameSpaceIdent = ""
+	}
+
+	leftObj := Eval(node.Left, env)
+	if isError(leftObj) {
+		return leftObj, true
+	}
+
+	switch {
+	case node.Operator == "." && leftObj.Type() == object.NAMESPACE_OBJ:
+		return evalNameSpaceCall(leftObj, node.Right, nameSpaceIdent), true
+	default:
+		return nil, false
+	}
+}
+
+func evalNameSpaceCall(leftObj object.Object, rightNode ast.Node,
+	leftName string) object.Object {
+
+	nameSpace := leftObj.(*object.NameSpace)
+
+	evaluated := Eval(rightNode, nameSpace.Env)
+
+	if isError(evaluated) {
+		// namespaceの変数名をメッセージに追加
+		newErrMsg := fmt.Sprintf(`In namespace "%s": %s`,
+			leftName, evaluated.(*object.Error).Message)
+		return newError(newErrMsg)
+	}
+
+	// NOTE: メソッド呼び出し可能にするため、evaluatedが
+	// Functionだった場合、スコープをnameSpaceのものに変更
+	// (nameSpace.Env内に無い(より外側にある)束縛が参照され右辺値が評価された場合、
+	// function.Envは「宣言時」のスコープであるためnameSpace.Envの外側にある。
+	// そこで、nameSpace内の束縛も関数呼び出し評価中に参照できるよう、
+	// 関数のスコープをnameSpace.Envにする)
+	// (nameSpace.Envで宣言された関数を呼び出した場合は、スコープは変わらないので
+	// 普通のnameSpaceの参照として利用する場合も問題ない)
+	if function, ok := evaluated.(*object.Function); ok {
+		function.Env = nameSpace.Env
+		return function
+	}
+
+	return evaluated
 }
