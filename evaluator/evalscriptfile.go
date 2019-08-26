@@ -11,10 +11,19 @@ import (
 )
 
 func EvalScriptFile(fileName string) (*object.Environment, error) {
+	const DEFAULT_PATH = "../scripts/"
 
 	scriptCode, err := readScript(fileName)
+
 	if err != nil {
-		return nil, err
+		// 読み込み失敗した場合は、デフォルトパスをprefixに付けてもう一度探す
+		alternativeCode, alternativeErr := readScript(DEFAULT_PATH + fileName)
+		if alternativeErr != nil {
+			return nil, err
+		} else {
+			// 代わりのファイル名で読み込めた場合はそちらのコードを使用
+			scriptCode = alternativeCode
+		}
 	}
 
 	l := lexer.New(scriptCode)

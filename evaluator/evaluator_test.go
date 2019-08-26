@@ -480,6 +480,13 @@ func TestBuildinFunctions(t *testing.T) {
 		// NOTE: 戻り値の型がNameSpaceのテストはTestBuildinNameSpaceFunctionsで行う
 		{`fn() { outer(); }() == self()`, true},
 		{`(namespace { let o = outer(); }).o == self()`, true},
+		{`import("std"); std.map([1, 2, 3], fn(x) { x * x; });`, []int64{1, 4, 9}},
+		{`import()`, "wrong number of arguments. got=0, want=1"},
+		{`import(1)`, "argument to `import` must be STRING, got INTEGER"},
+		{`import("_")`, "file could not open: _.monkey"},
+		{`import("1")`, "invalid file name to import as namespace: 1"},
+		{`import("foo/1")`, "invalid file name to import as namespace: 1"},
+		{`import("foo\1")`, "invalid file name to import as namespace: 1"},
 	}
 
 	for _, tt := range tests {
@@ -563,7 +570,6 @@ func TestBuildinNameSpaceFunctions(t *testing.T) {
 			object.NULL_OBJ,
 			`null`,
 		},
-		// TODO namespace内のouterと"."演算子での関数呼び出しの組み合わせ
 	}
 
 	for _, tt := range tests {
