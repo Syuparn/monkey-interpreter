@@ -56,4 +56,17 @@ let extend = fn(arrOne, arrTwo) {
     iter(arrTwo, arrOne);
 };
 
-"TODO: flatmap, compactmap"
+"NOTE: if (!0) {} == null"
+let compactmap = fn(arr, f) {
+    filter(map(arr, f), fn(x) { x != if (!0) {} });
+}
+
+"TODO: flatmap"
+
+let abs = fn(x) {
+    if (x > 0) {
+        x;
+    } else {
+        -x;
+    };
+};
