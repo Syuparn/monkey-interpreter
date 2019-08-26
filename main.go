@@ -36,8 +36,5 @@ func runRepl() {
 }
 
 func runScriptFile(fileName string) {
-	_, err := runscript.RunScript(fileName)
-	if err != nil {
-		fmt.Printf("%s", err)
-	}
+	runscript.RunScript(fileName, os.Stdout)
 }
