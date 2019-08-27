@@ -3,7 +3,6 @@ package evaluator
 import (
 	"../object"
 	"fmt"
-	"regexp"
 )
 
 // NOTE: envを引数に追加
@@ -155,48 +154,9 @@ var builtins = map[string]*object.Builtin{
 			}
 
 			fileStem := args[0].(*object.String).Value
-			nameSpaceIdent, ok := identifiable(fileStem)
-			if !ok {
-				return newError("invalid file name to import as namespace: %s",
-					nameSpaceIdent)
-			}
 
-			fileName := fileStem + ".monkey"
-
-			// NOTE: use init() to avoid initialization loop
-			// builtin -> EvalScriptFile -> Eval -> evalIdentifier -> builtin
-
-			// same as        "EvalScriptFile(fileName)"
-			importEnv, err := _evalScriptFile(fileName)
-			if err != nil {
-				return newError(fmt.Sprintf("%s", err))
-			}
-
-			imported := &object.NameSpace{Env: importEnv}
-			// i.e) import("std")の内容はNAMESPACE stdに束縛
-			env.Set(nameSpaceIdent, imported)
-			return imported
+			// NOTE: namespace中THIS_DIR, THIS_FILEにファイル名をSTRINGで束縛
+			return importScript(env, fileStem+".monkey")
 		},
 	},
-}
-
-func identifiable(fileStem string) (string, bool) {
-	const NON_IDENT_PATTERN = `[^a-zA-Z_]`
-	splittedByDir := regexp.MustCompile(`[/\\]`).Split(fileStem, -1)
-	ident := splittedByDir[len(splittedByDir)-1]
-	if regexp.MustCompile(NON_IDENT_PATTERN).MatchString(ident) {
-		return ident, false
-	}
-
-	return ident, true
-}
-
-// NOTE: use init() to avoid initialization loop
-// builtin -> EvalScriptFile -> Eval -> evalIdentifier -> builtin
-var _evalScriptFile func(string) (*object.Environment, error)
-
-// (initは特殊な関数で、実行の直前に自動的に呼び出される(コード内での呼び出しは不能)
-// 宣言を実行の直前(importの初期化の直後)まで遅延させるためループしなくなる)
-func init() {
-	_evalScriptFile = EvalScriptFile
 }

@@ -4,6 +4,9 @@ import (
 	"../lexer"
 	"../object"
 	"../parser"
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -480,13 +483,11 @@ func TestBuildinFunctions(t *testing.T) {
 		// NOTE: 戻り値の型がNameSpaceのテストはTestBuildinNameSpaceFunctionsで行う
 		{`fn() { outer(); }() == self()`, true},
 		{`(namespace { let o = outer(); }).o == self()`, true},
-		{`import("std"); std.map([1, 2, 3], fn(x) { x * x; });`, []int64{1, 4, 9}},
+		// NOTE: import成功例のテストはTestImportで行う　(ファイル探索システムがmain.goを
+		// 基準に作られているので、パスを絶対参照する必要がある)
 		{`import()`, "wrong number of arguments. got=0, want=1"},
 		{`import(1)`, "argument to `import` must be STRING, got INTEGER"},
 		{`import("_")`, "file could not open: _.monkey"},
-		{`import("1")`, "invalid file name to import as namespace: 1"},
-		{`import("foo/1")`, "invalid file name to import as namespace: 1"},
-		{`import("foo\1")`, "invalid file name to import as namespace: 1"},
 	}
 
 	for _, tt := range tests {
@@ -601,6 +602,31 @@ func TestBuildinNameSpaceFunctions(t *testing.T) {
 		case object.NULL_OBJ:
 			testNullObject(t, evaluated)
 		}
+	}
+}
+
+func TestImport(t *testing.T) {
+	// NOTE: importのファイル探索システムはmain.goを基準に作られているので、
+	// ファイルは絶対参照する
+	curDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("fail to get current dir: %s", err)
+	}
+	path := filepath.Join(filepath.Dir(curDir), "scripts")
+
+	tests := []struct {
+		input    string
+		expected []int64
+	}{
+		{
+			`let std = import("%s/std"); std.map([1, 2, 3], fn(x) { x * x; });`,
+			[]int64{1, 4, 9},
+		},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(fmt.Sprintf(tt.input, path))
+		testIntegerArray(t, evaluated, tt.expected)
 	}
 }
 

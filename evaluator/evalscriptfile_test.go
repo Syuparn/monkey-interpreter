@@ -2,10 +2,16 @@ package evaluator
 
 import (
 	"fmt"
+	"os"
 	"testing"
 )
 
 func TestRunScriptErrors(t *testing.T) {
+	curDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("fail to fetch current diretory:\n%s", err)
+	}
+
 	tests := []struct {
 		fileName string
 		expected string
@@ -13,7 +19,7 @@ func TestRunScriptErrors(t *testing.T) {
 		// reading error
 		{
 			"errsample/notexistingfile.monkey",
-			"file could not open: errsample/notexistingfile.monkey",
+			"file could not open: " + curDir + "/errsample/notexistingfile.monkey",
 		},
 		// parser error
 		{
@@ -31,7 +37,7 @@ func TestRunScriptErrors(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		_, err := EvalScriptFile(tt.fileName)
+		_, err := EvalScriptFile(curDir + "/" + tt.fileName)
 
 		if err == nil {
 			t.Fatalf("err should occur. fileName=%s", tt.fileName)

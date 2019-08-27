@@ -8,25 +8,19 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
 func EvalScriptFile(fileName string) (*object.Environment, error) {
-	const DEFAULT_PATH = "../scripts/"
+	// NOTE: enviroment内の変数"THIS_DIR","THIS_FILE"に
+	// スクリプトファイルのディレクトリ/ファイルパスをSTRINGで格納
 
-	scriptCode, err := readScript(fileName)
-
+	script, absFileName, err := tryAllPathsReadScript(fileName)
 	if err != nil {
-		// 読み込み失敗した場合は、デフォルトパスをprefixに付けてもう一度探す
-		alternativeCode, alternativeErr := readScript(DEFAULT_PATH + fileName)
-		if alternativeErr != nil {
-			return nil, err
-		} else {
-			// 代わりのファイル名で読み込めた場合はそちらのコードを使用
-			scriptCode = alternativeCode
-		}
+		return nil, err
 	}
 
-	l := lexer.New(scriptCode)
+	l := lexer.New(script)
 	p := parser.New(l)
 	program := p.ParseProgram()
 
@@ -35,6 +29,12 @@ func EvalScriptFile(fileName string) (*object.Environment, error) {
 	}
 
 	env := object.NewEnvironment()
+	// env内にディレクトリ場所を格納する変数"THIS_DIR"を束縛
+	if absFileName != "" {
+		env.Set("THIS_DIR", &object.String{Value: filepath.Dir(absFileName)})
+		env.Set("THIS_FILE", &object.String{Value: absFileName})
+	}
+
 	evaluated := Eval(program, env)
 
 	if errObj, ok := evaluated.(*object.Error); ok {
@@ -42,6 +42,30 @@ func EvalScriptFile(fileName string) (*object.Environment, error) {
 	}
 
 	return env, nil
+}
+
+func tryAllPathsReadScript(fileName string) (string, string, error) {
+	script, err := readScript(fileName)
+	// if found, return it
+	if err == nil {
+		return script, fileName, nil
+	}
+
+	candidatePaths, pathErr := defaultPaths()
+	if pathErr != nil {
+		return "", "", fmt.Errorf("fail to create defaultPaths:\n%s", err)
+	}
+
+	// try again!
+	for _, path := range candidatePaths {
+		absFileName := filepath.Join(path, fileName)
+		script, err := readScript(absFileName)
+		if err == nil {
+			return script, absFileName, nil
+		}
+	}
+
+	return "", "", err
 }
 
 func readScript(fileName string) (string, error) {
@@ -57,6 +81,35 @@ func readScript(fileName string) (string, error) {
 	}
 
 	return string(script), nil
+}
+
+var defaultPathCache = []string{}
+
+func defaultPaths() ([]string, error) {
+	if len(defaultPathCache) != 0 {
+		return defaultPathCache, nil
+	}
+
+	relativePaths := []string{
+		"scripts",
+	}
+
+	monkeyPath, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+	mainDir := filepath.Dir(monkeyPath)
+
+	paths := []string{}
+	for _, relativePath := range relativePaths {
+		paths = append(paths, filepath.Join(mainDir, relativePath))
+	}
+
+	if len(defaultPathCache) == 0 {
+		defaultPathCache = paths
+	}
+
+	return paths, nil
 }
 
 const MONKEY_FACE = `
