@@ -31,7 +31,7 @@ func EvalScriptFile(fileName string) (*object.Environment, error) {
 	env := object.NewEnvironment()
 	// env内にディレクトリ場所を格納する変数"THIS_DIR"を束縛
 	if absFileName != "" {
-		env.Set("THIS_DIR", &object.String{Value: filepath.Dir(absFileName)})
+		env.Set("THIS_DIR", &object.String{Value: filepath.Dir(absFileName) + "/"})
 		env.Set("THIS_FILE", &object.String{Value: absFileName})
 	}
 
@@ -48,7 +48,8 @@ func tryAllPathsReadScript(fileName string) (string, string, error) {
 	script, err := readScript(fileName)
 	// if found, return it
 	if err == nil {
-		return script, fileName, nil
+		// make separators ("/" or "\") all the same
+		return script, filepath.Clean(fileName), nil
 	}
 
 	candidatePaths, pathErr := defaultPaths()
@@ -58,7 +59,7 @@ func tryAllPathsReadScript(fileName string) (string, string, error) {
 
 	// try again!
 	for _, path := range candidatePaths {
-		absFileName := filepath.Join(path, fileName)
+		absFileName := filepath.Join(path, fileName) // Join cleans path inside
 		script, err := readScript(absFileName)
 		if err == nil {
 			return script, absFileName, nil
