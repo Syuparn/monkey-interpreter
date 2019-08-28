@@ -35,7 +35,17 @@ func (e *Environment) Inspect() string {
 	var out bytes.Buffer
 	pairs := []string{}
 	for k, v := range e.store {
-		pairs = append(pairs, fmt.Sprintf("%s: %s", k, v.Inspect()))
+		// NOTE: 下記の問題を回避するため、namespace内のnamespaceは略記する
+		// namespaceをそのまま表示すると自己参照で無限ループ
+		// `namespace { let ns = self(); };`
+		switch v.Type() {
+		case NAMESPACE_OBJ:
+			// 内部は省略
+			pairs = append(pairs, fmt.Sprintf("%s: namespace {...}", k))
+		default:
+			// 束縛されたobjectをinspect
+			pairs = append(pairs, fmt.Sprintf("%s: %s", k, v.Inspect()))
+		}
 	}
 
 	out.WriteString("{")

@@ -571,6 +571,19 @@ func TestBuiltinNameSpaceFunctions(t *testing.T) {
 			object.NULL_OBJ,
 			`null`,
 		},
+		// namespace内のnamespaceは表記が簡略化される(参考)
+		{
+			`namespace { let ns = namespace { let five = 5; }; };`,
+			object.NAMESPACE_OBJ,
+			`namespace {ns: namespace {...}}`,
+		},
+		// recursive binding (namespace内のnamespaceは表記が簡略化されるため
+		// スタックオーバーフローしない)
+		{
+			`namespace { let ns = self(); };`,
+			object.NAMESPACE_OBJ,
+			`namespace {ns: namespace {...}}`,
+		},
 	}
 
 	for _, tt := range tests {
