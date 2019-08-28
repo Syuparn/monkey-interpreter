@@ -480,7 +480,7 @@ func TestBuildinFunctions(t *testing.T) {
 		{`puts()`, nil},
 		{`puts("one", "two)"`, nil},
 		{`puts(1, "two", ["three"], {"four": "five"}, true)`, nil},
-		// NOTE: 戻り値の型がNameSpaceのテストはTestBuildinNameSpaceFunctionsで行う
+		// NOTE: 戻り値の型がNameSpaceのテストはTestBuiltinNameSpaceFunctionsで行う
 		{`fn() { outer(); }() == self()`, true},
 		{`(namespace { let o = outer(); }).o == self()`, true},
 		// NOTE: import成功例のテストはTestImportで行う　(ファイル探索システムがmain.goを
@@ -518,7 +518,7 @@ func TestBuildinFunctions(t *testing.T) {
 	}
 }
 
-func TestBuildinNameSpaceFunctions(t *testing.T) {
+func TestBuiltinNameSpaceFunctions(t *testing.T) {
 	tests := []struct {
 		input        string
 		expectedType object.ObjectType
