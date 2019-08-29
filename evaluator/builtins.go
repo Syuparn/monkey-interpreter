@@ -159,4 +159,14 @@ var builtins = map[string]*object.Builtin{
 			return importScript(env, fileStem+".monkey")
 		},
 	},
+	"type": &object.Builtin{
+		Fn: func(env *object.Environment, args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return newError("wrong number of arguments. got=%d, want=1",
+					len(args))
+			}
+
+			return &object.String{Value: string(args[0].Type())}
+		},
+	},
 }

@@ -488,6 +488,8 @@ func TestBuildinFunctions(t *testing.T) {
 		{`import()`, "wrong number of arguments. got=0, want=1"},
 		{`import(1)`, "argument to `import` must be STRING, got INTEGER"},
 		{`import("_")`, "file could not open: _.monkey"},
+		// NOTE: 戻り値の型がStringのテストはTestbuiltinStringFunctionで行う
+		{`type()`, "wrong number of arguments. got=0, want=1"},
 	}
 
 	for _, tt := range tests {
@@ -514,6 +516,36 @@ func TestBuildinFunctions(t *testing.T) {
 			testNullObject(t, evaluated)
 		case []int64:
 			testIntegerArray(t, evaluated, expected)
+		}
+	}
+}
+
+func TestBuiltinStringFunctions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{`type(1)`, "INTEGER"},
+		{`type(true)`, "BOOLEAN"},
+		{`type(if (!0) {})`, "NULL"},
+		{`type(fn(x) { x })`, "FUNCTION"},
+		{`type("hello")`, "STRING"},
+		{`type(puts)`, "BUILTIN"},
+		{`type([1, 2, 3])`, "ARRAY"},
+		{`type({"age": 24})`, "HASH"},
+		{`type(namespace {})`, "NAMESPACE"},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		str, ok := evaluated.(*object.String)
+		if !ok {
+			t.Fatalf("object is not string. got=%T (%+v)", evaluated, evaluated)
+		}
+
+		if str.Value != tt.expected {
+			t.Errorf("String has wrong value. got=%q, expected=%q",
+				str.Value, tt.expected)
 		}
 	}
 }
