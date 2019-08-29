@@ -304,6 +304,10 @@ func TestErrorHandling(t *testing.T) {
 			`"string"."string"`,
 			"unknown operator: STRING . STRING",
 		},
+		{
+			`fn(x, y) { x + y; }(1)`,
+			"wrong number of arguments. got=1, want=2",
+		},
 	}
 
 	for _, tt := range tests {

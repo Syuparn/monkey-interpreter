@@ -350,6 +350,12 @@ func applyFunction(fn object.Object, args []object.Object,
 
 	switch fn := fn.(type) {
 	case *object.Function:
+		// ality check
+		if len(fn.Parameters) != len(args) {
+			return newError("wrong number of arguments. got=%d, want=%d",
+				len(args), len(fn.Parameters))
+		}
+
 		// 関数内スコープの名前空間に引数を束縛
 		extendedEnv := extendFunctionEnv(fn, args)
 		// スコープ内の名前空間を使用
