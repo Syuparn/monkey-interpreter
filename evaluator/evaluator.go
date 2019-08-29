@@ -157,6 +157,12 @@ func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) obje
 		}
 	}
 
+	// 空のブロックを評価すると、resultはまだ初期値(==nil)のまま!
+	// そのまま返すとぬるぽobjectを生成してしまう
+	if result == nil {
+		return NULL
+	}
+
 	return result // syntax sugar: ブロック内の最後の文を評価した値を返す
 }
 
