@@ -1,7 +1,7 @@
 "from ''Writing An Interpreter In Go'' "
 let map = fn(arr, f) {
     let iter = fn(arr, acc) {
-        if (len(arr)==0) {
+        if (len(arr) == 0) {
             acc;
         } else {
             iter(rest(arr), push(acc, f(first(arr))));
@@ -13,7 +13,7 @@ let map = fn(arr, f) {
 "from ''Writing An Interpreter In Go'' "
 let reduce = fn(arr, initial, f) {
     let iter = fn(arr, result) {
-        if (len(arr)==0) {
+        if (len(arr) == 0) {
             result;
         } else {
             iter(rest(arr), f(result, first(arr)))
@@ -24,7 +24,7 @@ let reduce = fn(arr, initial, f) {
 
 "from ''Writing An Interpreter In Go'' "
 let sum = fn(arr) {
-    reduce(arr, 0, fn(init, el) {init + el});
+    reduce(arr, 0, fn(init, el) { init + el });
 };
 
 let filter = fn(arr, cond) {
@@ -46,7 +46,7 @@ let filter = fn(arr, cond) {
 };
 
 let extend = fn(arrOne, arrTwo) {
-    let iter = fn(arr,extended) {
+    let iter = fn(arr, extended) {
         if (len(arr)==0) {
             extended;
         } else {
