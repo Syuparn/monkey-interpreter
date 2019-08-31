@@ -61,7 +61,24 @@ let compactmap = fn(arr, f) {
     filter(map(arr, f), fn(x) { x != if (!0) {} });
 }
 
-"TODO: flatmap"
+let flatmap = fn(arr, f) {
+    flatten(map(arr, f));
+};
+
+let flatten = fn(arr) {
+    let iter = fn(arr, flat) {
+        if (type(arr) != "ARRAY") {
+            return iter([], extend(flat, [arr]));
+        }
+
+        if (len(arr) == 0) {
+            flat;
+        } else {
+            iter(rest(arr), extend(flat, flatten(first(arr))));
+        };
+    };
+    iter(arr, []);
+};
 
 let abs = fn(x) {
     if (x > 0) {
