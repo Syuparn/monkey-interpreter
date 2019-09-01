@@ -124,3 +124,14 @@ let all = fn(arr, cond) {
 let any = fn(arr, cond) {
     count(arr, cond) > 0;
 };
+
+let repeat = fn(arr, n) {
+    let iter = fn(repeated, i) {
+        if (i <= 0) {
+            repeated;
+        } else {
+            iter(extend(repeated, arr), i - 1);
+        }
+    };
+    iter([], n);
+};
