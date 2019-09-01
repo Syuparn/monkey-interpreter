@@ -135,3 +135,14 @@ let repeat = fn(arr, n) {
     };
     iter([], n);
 };
+
+let reverse = fn(arr) {
+    let iter = fn(i, reversed) {
+        if (i < 0) {
+            reversed;
+        } else {
+            iter(i - 1, push(reversed, arr[i]));
+        }
+    };
+    iter(len(arr) - 1, []);
+};
