@@ -167,3 +167,14 @@ let arange = fn(start, stop, step) {
     };
     iter(start, []);
 };
+
+let each = fn(arr, f) {
+    let iter = fn(i) {
+        if (i < len(arr)) {
+            f(arr[i]);
+            iter(i + 1);
+        }
+    };
+    iter(0);
+    arr;
+}
