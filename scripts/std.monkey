@@ -87,3 +87,17 @@ let abs = fn(x) {
         -x;
     };
 };
+
+let zip = fn(arrOne, arrTwo) {
+    let iter = fn(arrOne, arrTwo, zipped) {
+        if (len(arrOne) == 0 || len(arrTwo) == 0) {
+            zipped;
+        } else {
+            iter(
+                rest(arrOne), rest(arrTwo),
+                push(zipped, [first(arrOne), first(arrTwo)])
+            );
+        }
+    };
+    iter(arrOne, arrTwo, []);
+};
