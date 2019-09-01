@@ -146,3 +146,24 @@ let reverse = fn(arr) {
     };
     iter(len(arr) - 1, []);
 };
+
+let arange = fn(start, stop, step) {
+    "avoid infinite loop"
+    if ((stop - start) * step < 0 || step == 0) {
+        return [];
+    };
+
+    "stop condition"
+    let stopCond = fn(i) {
+        if (step > 0) { i >= stop; } else { i <= stop; };
+    };
+
+    let iter = fn(i, arr) {
+        if (stopCond(i)) {
+            arr;
+        } else {
+            iter(i + step, push(arr, i));
+        }
+    };
+    iter(start, []);
+};
