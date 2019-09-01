@@ -112,3 +112,15 @@ let enumerate = fn(arr) {
     };
     iter(arr, 0, []);
 };
+
+let count = fn(arr, cond) {
+    len(filter(arr, cond));
+};
+
+let all = fn(arr, cond) {
+    count(arr, cond) == len(arr);
+};
+
+let any = fn(arr, cond) {
+    count(arr, cond) > 0;
+};
