@@ -178,3 +178,13 @@ let each = fn(arr, f) {
     iter(0);
     arr;
 }
+
+let product = fn(arrOne, arrTwo) {
+    "wrap array [elemOne, elemTwo] by hash not to flatten"
+    let arr = flatmap(arrOne, fn(elemOne){
+        map(arrTwo, fn(elemTwo) { {"v": [elemOne, elemTwo]} })
+    });
+    
+    "unwrap hash"
+    map(arr, fn(x) { x["v"] });
+}
