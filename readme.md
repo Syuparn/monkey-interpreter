@@ -139,6 +139,8 @@ Notice: This function works only if you build exective monkey file (due to file 
 `import()` reads a script file and returns it as `namespace`.
 
 ```monkey:sample.monkey
+"script file: sample.monkey"
+
 let add = fn(x, y) { x + y; };
 ```
 
@@ -175,6 +177,7 @@ Likewise, `outer()` returns `namespace` with the outer environment of current on
 These built-in functions realize class-like system like this.
 
 ```monkey:person.monkey
+"script file: person.monkey"
 let Person = namespace {
     let new = fn(age, name) {
         self();
@@ -220,6 +223,8 @@ namespace {age: 11, name: Tom}
 #### How do `self()` and `outer()` work?
 
 ```monkey:person.monkey
+"script file: person.monkey"
+
 let Person = namespace {
     let new = fn(age, name) {
         self();
@@ -250,6 +255,8 @@ Then, `sayHi()` is called in the environment of namespace `tom`, where `age` is 
 
 
 ```monkey:person.monkey
+"script file: person.monkey"
+
 let Person = namespace {
   ...
   let grow = fn() {
