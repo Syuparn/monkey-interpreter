@@ -101,3 +101,14 @@ let zip = fn(arrOne, arrTwo) {
     };
     iter(arrOne, arrTwo, []);
 };
+
+let enumerate = fn(arr) {
+    let iter = fn(arr, i, enumerated) {
+        if (len(arr) == 0) {
+            enumerated;
+        } else {
+            iter(rest(arr), i + 1, push(enumerated, [i, first(arr)]));
+        }
+    };
+    iter(arr, 0, []);
+};
